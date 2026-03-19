@@ -1,16 +1,14 @@
-# This is a sample Python script.
+from nba_api.stats.endpoints import playercareerstats
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+# Nikola Jokić
+career = playercareerstats.PlayerCareerStats(player_id='203999')
 
+# pandas data frames (optional: pip install pandas)
+career.season_totals_regular_season.get_data_frame()
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+# json
+career.get_json()
 
+# dictionary
+career.get_dict()
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
