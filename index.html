@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Do You Know Ball?</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #08090d;
+      --surface: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.06);
+      --text: #e8e8ed;
+      --text-dim: rgba(255,255,255,0.4);
+      --text-faint: rgba(255,255,255,0.2);
+      --accent: #3b82f6;
+      --green: #22c55e;
+      --red: #ef4444;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif; min-height:100vh; }
+    .dm { font-family:'DM Mono',monospace; }
+
+    /* Subtle grid background */
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    @keyframes spin { to { transform:rotate(360deg) } }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+
+    .center-screen { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; position:relative; z-index:1; }
+    .spinner { width:32px; height:32px; border:2px solid rgba(255,255,255,0.08); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+
+    /* Layout */
+    .app { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:28px 32px; }
+    .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; gap:16px; flex-wrap:wrap; }
+    .header h1 { font-size:28px; font-weight:900; letter-spacing:-0.5px; }
+    .header h1 span { background:linear-gradient(135deg,var(--accent),#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .tag { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; background:var(--surface); border:1px solid var(--border); font-size:11px; color:var(--text-dim); letter-spacing:0.5px; }
+    .tag .dot { width:6px; height:6px; border-radius:50%; background:var(--green); }
+
+    .layout { display:grid; grid-template-columns:300px 1fr; gap:24px; }
+    @media(max-width:960px) { .layout { grid-template-columns:1fr; } }
+
+    /* Search */
+    .search-box { position:relative; margin-bottom:16px; }
+    .search-input {
+      width:100%; padding:11px 16px 11px 38px; border-radius:12px;
+      border:1px solid var(--border); background:var(--surface);
+      color:var(--text); font-family:'Outfit',sans-serif; font-size:14px; outline:none;
+      transition: border-color .15s;
+    }
+    .search-input:focus { border-color:rgba(255,255,255,0.15); }
+    .search-input::placeholder { color:var(--text-faint); }
+    .search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--text-faint); font-size:14px; pointer-events:none; }
+    .search-drop { position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:20; background:#131419; border:1px solid var(--border); border-radius:12px; overflow:hidden; max-height:280px; overflow-y:auto; }
+    .search-item { padding:10px 16px; cursor:pointer; transition:background .1s; border-bottom:1px solid rgba(255,255,255,0.03); }
+    .search-item:hover { background:rgba(255,255,255,0.04); }
+    .search-item:last-child { border-bottom:none; }
+
+    /* Player cards */
+    .sidebar { display:flex; flex-direction:column; gap:8px; }
+    .pcard {
+      padding:14px 16px; border-radius:12px; cursor:pointer;
+      border:1px solid transparent; transition:all .15s; position:relative;
+    }
+    .pcard:hover { background:rgba(255,255,255,0.03); }
+    .pcard.active { background:var(--surface); border-color:var(--border); }
+    .pcard.active::before { content:''; position:absolute; left:0; top:8px; bottom:8px; width:3px; border-radius:2px; }
+    .pcard-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+    .pcard-name { font-size:15px; font-weight:700; }
+    .pcard-meta { font-size:11px; color:var(--text-dim); margin-top:2px; }
+    .pcard-pts { font-size:18px; font-weight:800; }
+    .pcard-pts-round { font-size:11px; font-weight:500; color:var(--text-dim); margin-left:3px; }
+    .pcard-row { display:flex; gap:16px; }
+    .pcard-stat { font-size:12px; color:var(--text-dim); }
+    .pcard-stat strong { color:rgba(255,255,255,0.7); font-weight:600; }
+
+    /* Main content */
+    .main { display:flex; flex-direction:column; gap:20px; }
+
+    /* Section label */
+    .section-label { font-size:11px; font-weight:700; letter-spacing:2px; color:var(--text-faint); margin-bottom:10px; text-transform:uppercase; }
+
+    /* Season + Recent row */
+    .context-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media(max-width:700px) { .context-row { grid-template-columns:1fr; } }
+
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 20px; }
+
+    /* Season avg grid */
+    .avg-grid { display:flex; flex-wrap:wrap; gap:12px 20px; }
+    .avg-item { }
+    .avg-label { font-size:10px; font-weight:600; letter-spacing:1px; color:var(--text-faint); text-transform:uppercase; margin-bottom:2px; }
+    .avg-val { font-size:20px; font-weight:800; }
+    .avg-round { font-size:12px; font-weight:500; color:var(--text-dim); margin-left:3px; }
+
+    /* Recent games */
+    .recent-row { display:flex; gap:8px; }
+    .recent-game {
+      flex:1; padding:10px 12px; border-radius:10px;
+      background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04);
+    }
+    .recent-opp { font-size:12px; font-weight:700; margin-bottom:4px; }
+    .recent-stats { font-size:11px; color:var(--text-dim); line-height:1.6; }
+    .recent-stats strong { color:rgba(255,255,255,0.7); }
+    .wl { display:inline-block; padding:1px 5px; border-radius:4px; font-size:10px; font-weight:700; margin-left:4px; }
+    .wl-w { background:rgba(34,197,94,0.15); color:var(--green); }
+    .wl-l { background:rgba(239,68,68,0.15); color:var(--red); }
+
+    /* Upcoming predictions - the main event */
+    .predictions { display:flex; flex-direction:column; gap:10px; }
+    .pred-card {
+      display:grid; grid-template-columns:140px 1fr; border-radius:14px;
+      border:1px solid var(--border); overflow:hidden;
+      animation: fadeUp .4s ease both;
+    }
+    .pred-card:nth-child(1) { animation-delay:.05s }
+    .pred-card:nth-child(2) { animation-delay:.1s }
+    .pred-card:nth-child(3) { animation-delay:.15s }
+    .pred-card:nth-child(4) { animation-delay:.2s }
+    .pred-card:nth-child(5) { animation-delay:.25s }
+
+    .pred-team {
+      display:flex; flex-direction:column; justify-content:center; align-items:center;
+      padding:16px; position:relative; overflow:hidden;
+    }
+    .pred-team::before {
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(135deg, var(--team-color) 0%, transparent 80%);
+      opacity:0.12;
+    }
+    .pred-matchup { font-size:13px; font-weight:700; letter-spacing:1px; position:relative; color:var(--text-dim); }
+    .pred-opp { font-size:28px; font-weight:900; letter-spacing:-0.5px; position:relative; }
+    .pred-date { font-size:11px; color:var(--text-faint); position:relative; margin-top:2px; }
+
+    .pred-stats {
+      display:flex; align-items:center; padding:16px 20px; gap:16px; flex-wrap:wrap;
+      background:var(--surface);
+    }
+    .pred-stat { text-align:center; min-width:64px; }
+    .pred-stat-label { font-size:9px; font-weight:700; letter-spacing:1.5px; color:var(--text-faint); margin-bottom:3px; }
+    .pred-stat-val { font-size:22px; font-weight:800; line-height:1; }
+    .pred-stat-round { font-size:11px; font-weight:500; color:var(--text-dim); }
+    .pred-stat-pct { font-size:18px; font-weight:700; color:var(--text-dim); }
+    .pred-divider { width:1px; height:36px; background:var(--border); flex-shrink:0; }
+
+    /* No schedule fallback */
+    .no-schedule { padding:40px 20px; text-align:center; color:var(--text-dim); border-radius:14px; border:1px dashed var(--border); }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+const TC = {
+  OKC:"#007AC1",DEN:"#0E2240",LAC:"#C8102E",PHX:"#1D1160",LAL:"#FDB927",GSW:"#1D428A",SAS:"#C4CED4",
+  ATL:"#E03A3E",BOS:"#007A33",BKN:"#777D84",CHA:"#1D1160",CHI:"#CE1141",CLE:"#860038",DAL:"#00538C",
+  DET:"#C8102E",HOU:"#CE1141",IND:"#002D62",MEM:"#5D76A9",MIA:"#98002E",MIL:"#00471B",MIN:"#0C2340",
+  NOP:"#0C2340",NYK:"#F58426",ORL:"#0077C0",PHI:"#006BB6",POR:"#E03A3E",SAC:"#5A2D81",TOR:"#CE1141",
+  UTA:"#002B5C",WAS:"#002B5C",
+};
+const SN = {PTS:"PTS",AST:"AST",REB:"REB",STL:"STL",BLK:"BLK",FG_PCT:"FG%",FG3_PCT:"3P%"};
+function v(s){return s?.value??s??0}
+function r(s){return s?.rounded??Math.round(v(s))}
+
+function SearchBar({onSelect}){
+  const [q,setQ]=useState(""); const [res,setRes]=useState([]); const [open,setOpen]=useState(false); const t=useRef(null);
+  function onChange(e){const val=e.target.value;setQ(val);clearTimeout(t.current);if(val.length<2){setRes([]);setOpen(false);return}
+    t.current=setTimeout(()=>{fetch(`/api/search?q=${encodeURIComponent(val)}`).then(r=>r.json()).then(d=>{setRes(d);setOpen(true)})},300)}
+  function pick(p){setQ("");setOpen(false);onSelect(p)}
+  return(
+    <div className="search-box">
+      <div className="search-icon">&#x1F50D;</div>
+      <input className="search-input" placeholder="Search any NBA player ..." value={q} onChange={onChange}
+        onFocus={()=>res.length&&setOpen(true)} onBlur={()=>setTimeout(()=>setOpen(false),200)}/>
+      {open&&res.length>0&&<div className="search-drop">{res.map(p=>
+        <div key={p.id} className="search-item" onMouseDown={()=>pick(p)}>
+          <div style={{fontWeight:600,fontSize:14}}>{p.name}</div>
+          <div className="dm" style={{fontSize:11,color:'var(--text-faint)'}}>{p.active?"Active":"Retired"}</div>
+        </div>
+      )}</div>}
+    </div>
+  );
+}
+
+function PlayerCard({name,data,active,onClick}){
+  const c=TC[data.team]||"#666";
+  const sa=data.season_avg||data.projected||{};
+  return(
+    <div className={`pcard${active?" active":""}`} onClick={onClick} style={active?{"--pc":c}:{}}>
+      {active&&<style>{`.pcard.active::before{background:${c}}`}</style>}
+      <div className="pcard-top">
+        <div>
+          <div className="pcard-name">{name}</div>
+          <div className="pcard-meta dm">{data.team} #{data.number} &middot; {data.pos} &middot; {data.games_played||"?"}GP</div>
+        </div>
+        <div style={{textAlign:"right"}}>
+          <span className="pcard-pts" style={{color:c}}>{Math.round(v(sa.PTS))}</span>
+          <span className="pcard-pts-round dm">({v(sa.PTS).toFixed(1)})</span>
+        </div>
+      </div>
+      <div className="pcard-row">
+        {["AST","REB","STL"].map(s=><div key={s} className="pcard-stat dm"><strong>{Math.round(v(sa[s]))}</strong> ({v(sa[s]).toFixed(1)}) {s}</div>)}
+      </div>
+    </div>
+  );
+}
+
+function confColor(c) {
+  // Green for high confidence, yellow for mid, red for low
+  if (c >= 0.7) return "var(--green)";
+  if (c >= 0.45) return "#eab308";
+  return "var(--red)";
+}
+
+function PredCard({pred,teamColor}){
+  const [expanded,setExpanded]=useState(false);
+  const c=TC[pred.opponent]||"#666";
+  const prefix=pred.home?"vs":"@";
+  const bd=pred.breakdown||{};
+  const hasOpp=bd.has_matchup_data;
+  return(
+    <div className="pred-card" style={{"--team-color":c}}>
+      <div className="pred-team">
+        <div className="pred-matchup dm">{prefix}</div>
+        <div className="pred-opp" style={{color:c}}>{pred.opponent}</div>
+        <div className="pred-date dm">{pred.display_date||pred.date}</div>
+        {hasOpp&&<div className="dm" style={{fontSize:9,color:'var(--text-faint)',position:'relative',marginTop:2}}>{bd.vs_games_count} game{bd.vs_games_count!==1?"s":""} vs</div>}
+      </div>
+      <div style={{flex:1}}>
+        <div className="pred-stats" onClick={()=>setExpanded(!expanded)} style={{cursor:'pointer'}}>
+          {["PTS","AST","REB","STL","BLK"].map((s,i)=>{
+            const stat=pred[s]||{}; const val=stat.value||0; const rounded=stat.rounded||0;
+            const conf=stat.confidence; const range=stat.range||0;
+            return(<React.Fragment key={s}>
+              {i>0&&<div className="pred-divider"/>}
+              <div className="pred-stat">
+                <div className="pred-stat-label dm">{SN[s]}</div>
+                <div>
+                  <span className="pred-stat-val">{rounded}</span>
+                  <span className="dm" style={{fontSize:12,color:'var(--text-dim)',marginLeft:3}}>({val.toFixed(1)})</span>
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:4,marginTop:3}}>
+                  {conf!=null&&<span className="dm" style={{fontSize:10,fontWeight:600,color:confColor(conf)}}>{Math.round(conf*100)}%</span>}
+                  {range>0&&<span className="dm" style={{fontSize:9,color:'var(--text-faint)'}}>&#177;{range}</span>}
+                </div>
+              </div>
+            </React.Fragment>);
+          })}
+          <div className="pred-divider"/>
+          {["FG_PCT","FG3_PCT"].map(s=>{
+            const stat=pred[s]||{}; const val=stat.value||0; const range=stat.range||0;
+            return(<div key={s} className="pred-stat">
+              <div className="pred-stat-label dm">{SN[s]}</div>
+              <div className="pred-stat-pct dm">{(val*100).toFixed(0)}%</div>
+              {range>0&&<div className="dm" style={{fontSize:9,color:'var(--text-faint)',marginTop:3}}>&#177;{range}%</div>}
+            </div>);
+          })}
+          <div style={{marginLeft:'auto',fontSize:10,color:'var(--text-faint)',transform:expanded?'rotate(180deg)':'rotate(0)',transition:'transform .2s'}}>&#9660;</div>
+        </div>
+        {expanded&&bd.season_avg&&(
+          <div style={{padding:'12px 20px',borderTop:'1px solid var(--border)',background:'rgba(0,0,0,0.2)',fontSize:12}}>
+            <div style={{display:'grid',gridTemplateColumns:'80px repeat(5,1fr)',gap:'6px 12px',alignItems:'center'}}>
+              <div className="dm" style={{fontSize:9,fontWeight:700,color:'var(--text-faint)',letterSpacing:1}}>FACTOR</div>
+              {["PTS","AST","REB","STL","BLK"].map(s=><div key={s} className="dm" style={{fontSize:9,fontWeight:700,color:'var(--text-faint)',letterSpacing:1,textAlign:'right'}}>{s}</div>)}
+
+              <div className="dm" style={{fontSize:11,color:'var(--text-dim)'}}>Season <span style={{color:'var(--text-faint)'}}>(50%)</span></div>
+              {["PTS","AST","REB","STL","BLK"].map(s=><div key={s} className="dm" style={{fontSize:12,textAlign:'right',color:'var(--text-dim)'}}>{bd.season_avg[s]||0}</div>)}
+
+              <div className="dm" style={{fontSize:11,color:'var(--accent)'}}>Last 3 <span style={{color:'var(--text-faint)'}}>(30%)</span></div>
+              {["PTS","AST","REB","STL","BLK"].map(s=><div key={s} className="dm" style={{fontSize:12,textAlign:'right',color:'var(--accent)'}}>{bd.last_3_avg[s]||0}</div>)}
+
+              <div className="dm" style={{fontSize:11,color:hasOpp?c:'var(--text-faint)'}}>
+                {hasOpp?`vs ${pred.opponent}`:"No data"} <span style={{color:'var(--text-faint)'}}>{hasOpp?"(20%)":""}</span>
+              </div>
+              {["PTS","AST","REB","STL","BLK"].map(s=><div key={s} className="dm" style={{fontSize:12,textAlign:'right',color:hasOpp?c:'var(--text-faint)'}}>{hasOpp&&bd.vs_opponent_avg[s]!=null?bd.vs_opponent_avg[s]:"--"}</div>)}
+            </div>
+            <div className="dm" style={{marginTop:8,fontSize:10,color:'var(--text-faint)'}}>
+              {hasOpp?"Prediction = 50% season + 30% last 3 + 20% vs opponent":"Prediction = 60% season + 40% last 3 (no matchup data)"}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [data,setData]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [err,setErr]=useState(null);
+  const [picked,setPicked]=useState(null);
+  const [fetching,setFetching]=useState(false);
+
+  useEffect(()=>{
+    fetch("/api/players").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})
+      .then(d=>{setData(d);const top=Object.keys(d).sort((a,b)=>v((d[b].season_avg||{}).PTS)-v((d[a].season_avg||{}).PTS))[0];setPicked(top);setLoading(false)})
+      .catch(e=>{setErr(e.message);setLoading(false)});
+  },[]);
+
+  function handleSearch(player){
+    setFetching(true);
+    fetch(`/api/predict?id=${player.id}&name=${encodeURIComponent(player.name)}`)
+      .then(r=>r.json()).then(d=>{
+        if(d.error){alert(d.error);setFetching(false);return}
+        d._player_id=player.id;
+        setData(prev=>({...prev,[player.name]:d}));
+        setPicked(player.name);
+        setFetching(false);
+      }).catch(()=>setFetching(false));
+  }
+
+  const sorted=useMemo(()=>{
+    if(!data)return[];
+    return Object.keys(data).sort((a,b)=>v((data[b].season_avg||{}).PTS)-v((data[a].season_avg||{}).PTS));
+  },[data]);
+
+  if(loading)return<div className="center-screen"><div className="spinner"/><div className="dm" style={{color:'var(--text-dim)',fontSize:12,letterSpacing:2}}>LOADING DATA ...</div></div>;
+  if(err||!data)return<div className="center-screen"><div style={{fontSize:18,fontWeight:700,color:'var(--red)'}}>Connection failed</div><div className="dm" style={{color:'var(--text-dim)',fontSize:12}}><code>python3 -m uvicorn api:app --reload</code></div></div>;
+
+  const p=data[picked]||{};
+  const c=TC[p.team]||"#3b82f6";
+  const sa=p.season_avg||{};
+  const recent=p.recent_games||[];
+  const upcoming=p.upcoming||[];
+
+  return(
+    <div className="app">
+      {/* Header */}
+      <div className="header">
+        <div>
+          <h1>Do You Know <span>Ball</span>?</h1>
+          <div style={{fontSize:13,color:'var(--text-dim)',marginTop:2}}>Next-game stat predictions with confidence</div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div className="tag dm"><div className="dot"/>LIVE &middot; {CURRENT_SEASON} Season</div>
+          <button onClick={()=>{setLoading(true);fetch('/api/refresh').then(()=>fetch('/api/players').then(r=>r.json()).then(d=>{setData(d);setLoading(false)}))}} style={{padding:'5px 12px',borderRadius:20,border:'1px solid var(--border)',background:'var(--surface)',color:'var(--text-dim)',fontSize:11,cursor:'pointer',fontFamily:'DM Mono,monospace'}}>&#8635; Refresh Data</button>
+          <div style={{fontSize:13,color:'var(--text-dim)',marginTop:2}}>NBA API takes around 1 hour to update the most recent games played</div>
+        </div>
+      </div>
+
+
+      <div className="layout">
+        {/* Sidebar */}
+        <div>
+          <SearchBar onSelect={handleSearch}/>
+          {fetching&&<div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}><div className="spinner" style={{width:14,height:14,borderWidth:1.5}}/><span className="dm" style={{fontSize:11,color:'var(--text-dim)'}}>Fetching ...</span></div>}
+          <div className="sidebar">
+            {sorted.map(n=><PlayerCard key={n} name={n} data={data[n]} active={n===picked} onClick={()=>setPicked(n)}/>)}
+          </div>
+        </div>
+
+        {/* Main */}
+        <div className="main">
+          {/* How it works - top of page */}
+          <div className="card" style={{borderLeft:'3px solid var(--accent)',background:'rgba(59,130,246,0.03)'}}>
+            <div style={{fontSize:14,fontWeight:700,marginBottom:8}}>How to read predictions</div>
+            <div style={{fontSize:13,color:'var(--text-dim)',lineHeight:1.7}}>
+              <div style={{marginBottom:8}}>
+                <strong style={{color:'var(--text)'}}>35 (34.8) PTS</strong> = predicted line is <strong style={{color:'var(--text)'}}>35</strong>, precise model output is 34.8.
+              </div>
+              <div style={{marginBottom:8}}>
+                <strong style={{color:'var(--green)'}}>93%</strong> = confidence the player hits at or above the rounded line. Green (70%+) = strong pick. Yellow (45-69%) = coin flip. Red ({'<'}45%) = unlikely to clear.
+              </div>
+              <div style={{marginBottom:12}}>
+                <strong style={{color:'var(--text)'}}>&#177;3.8</strong> = expected range. The actual stat will most likely fall within this many points of the prediction. A tight range means the player is consistent; a wide range means they're volatile.
+              </div>
+              <div style={{fontSize:12,color:'var(--text-faint)',borderTop:'1px solid var(--border)',paddingTop:10}}>
+                <strong>The edge:</strong> at standard -110 odds, you only need 52.4% accuracy to profit. Our predictions blend season average (50%), recent form (30%), and opponent matchup (20%), with the range tightened to reflect that informed predictions are more precise than raw game-to-game variance. Anything green (70%+) is a strong lean. Click any row to see the full breakdown.
+              </div>
+            </div>
+          </div>
+
+          {/* Context: season avg + recent form */}
+          <div className="context-row">
+            <div className="card">
+              <div className="section-label dm">Season Averages</div>
+              <div className="avg-grid">
+                {Object.keys(SN).map(s=>{
+                  const val=v(sa[s]); const isPct=s.includes("PCT");
+                  return(<div key={s} className="avg-item">
+                    <div className="avg-label dm">{SN[s]}</div>
+                    <div>
+                      <span className="avg-val">{isPct?`${(val*100).toFixed(0)}%`:Math.round(val)}</span>
+                      {!isPct&&<span className="avg-round dm"> ({val.toFixed(1)})</span>}
+                    </div>
+                  </div>);
+                })}
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="section-label dm">Last 3 Games</div>
+              {recent.length>0?(
+                <div className="recent-row">
+                  {recent.map((g,i)=>(
+                    <div key={i} className="recent-game">
+                      <div className="recent-opp">
+                        <span style={{color:TC[g.opponent]||'#888'}}>{g.home?"vs":"@"} {g.opponent}</span>
+                        {g.result&&<span className={`wl wl-${g.result.toLowerCase()}`}>{g.result}</span>}
+                      </div>
+                      <div className="recent-stats dm">
+                        <strong>{g.PTS||0}</strong> PTS<br/>
+                        <strong>{g.AST||0}</strong> AST &middot; <strong>{g.REB||0}</strong> REB
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ):<div style={{color:'var(--text-faint)',fontSize:13}}>No recent game data</div>}
+            </div>
+          </div>
+
+          {/* Upcoming predictions */}
+          <div>
+            <div className="section-label dm">Next 5 Game Predictions</div>
+            {upcoming.length>0?(
+              <div className="predictions">
+                {upcoming.map((pred,i)=><PredCard key={i} pred={pred} teamColor={c}/>)}
+              </div>
+            ):(
+              <div className="no-schedule">
+                <div style={{fontSize:15,fontWeight:600,marginBottom:8}}>Schedule unavailable</div>
+                <div className="dm" style={{fontSize:12}}>Could not pull upcoming games from the NBA schedule API.</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const CURRENT_SEASON="2025-26";
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
