@@ -20,7 +20,7 @@ from data.fetcher import (
     get_upcoming_games,
 )
 from features import get_season_averages, get_last_n_games
-from model import predict_games
+from model import train_models, predict_games
 from config import PLAYERS, TEAM_INFO, STATS
 
 app = FastAPI(title="Do You Know Ball?", version="5.0")
@@ -29,12 +29,20 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 _cache = {"game_logs": None}
 
 
+_cache = {"game_logs": None, "models": None}
+
+
 def _load():
-    if _cache["game_logs"] is not None:
+    if _cache["models"] is not None:
         return
 
     print("Fetching current season game logs ...")
     _cache["game_logs"] = fetch_all_default_players()
+    print()
+
+    print("Training models ...")
+    models, metrics = train_models(_cache["game_logs"])
+    _cache["models"] = models
     print(f"\nReady! Open http://localhost:8000\n")
 
 
@@ -59,8 +67,7 @@ def _player_response(name, game_logs, info=None):
     upcoming = get_upcoming_games(team, n=5)
 
     # Predictions for upcoming games
-    predictions = predict_games(game_logs, name, upcoming)
-
+    predictions = predict_games(game_logs, _cache["models"], name, upcoming)
     # Format season averages
     formatted_avg = {}
     for s in STATS:
@@ -128,12 +135,10 @@ def api_predict(
 
 @app.get("/api/refresh")
 def refresh():
-    """Clear cache and re-fetch all game logs."""
     global _cache
-    _cache = {"game_logs": None}
+    _cache = {"game_logs": None, "models": None}
     _load()
     return {"status": "refreshed", "games": len(_cache["game_logs"])}
-
 
 @app.get("/api/health")
 def health():
