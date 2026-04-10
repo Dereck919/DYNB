@@ -18,7 +18,7 @@ import math
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import GradientBoostingRegressor
-from data.fetcher import parse_opponent
+from fetcher import parse_opponent
 from config import STATS, PLAYERS
 
 MODEL_PARAMS = {
