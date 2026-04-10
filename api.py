@@ -13,7 +13,7 @@ from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from data.fetcher import (
+from fetcher import (
     fetch_all_default_players,
     fetch_current_season,
     search_players,
