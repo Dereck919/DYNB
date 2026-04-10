@@ -148,4 +148,4 @@ def health():
 
 @app.get("/")
 def serve_frontend():
-    return FileResponse(Path(__file__).parent / "frontend" / "index.html")
+    return FileResponse(Path(__file__).parent / "index.html")
