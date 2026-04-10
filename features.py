@@ -12,7 +12,7 @@
 
 import pandas as pd
 import numpy as np
-from data.fetcher import parse_opponent, is_home_game
+from fetcher import parse_opponent, is_home_game
 from config import STATS
 
 # Columns the model uses as input
