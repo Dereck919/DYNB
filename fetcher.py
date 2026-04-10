@@ -42,7 +42,7 @@ def fetch_current_season(player_id, player_name="Unknown"):
     automatically appear once they begin.
     """
     frames = []
-    for stype in ["Regular Season", "Playoffs"]:
+    for stype in ["Regular Season", "Playin", "Playoffs"]:
         try:
             log = playergamelog.PlayerGameLog(
                 player_id=player_id,
