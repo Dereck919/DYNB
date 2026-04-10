@@ -36,19 +36,33 @@ def search_players(query):
 # ── Game logs ──
 
 def fetch_current_season(player_id, player_name="Unknown"):
-    """Fetch this season's game log for one player."""
-    try:
-        log = playergamelog.PlayerGameLog(
-            player_id=player_id,
-            season=CURRENT_SEASON,
-            season_type_all_star="Regular Season",
-        )
-        df = log.get_data_frames()[0]
-        df["PLAYER_NAME"] = player_name
-        return df
-    except Exception as e:
-        print(f"  Could not fetch {player_name}: {e}")
+    """
+    Fetch this season's game log for one player.
+    Pulls both Regular Season and Playoffs so playoff games
+    automatically appear once they begin.
+    """
+    frames = []
+    for stype in ["Regular Season", "Playoffs"]:
+        try:
+            log = playergamelog.PlayerGameLog(
+                player_id=player_id,
+                season=CURRENT_SEASON,
+                season_type_all_star=stype,
+            )
+            df = log.get_data_frames()[0]
+            if not df.empty:
+                frames.append(df)
+        except Exception:
+            # Playoffs call will fail/return empty before postseason starts
+            pass
+
+    if not frames:
+        print(f"  Could not fetch {player_name}")
         return pd.DataFrame()
+
+    combined = pd.concat(frames, ignore_index=True)
+    combined["PLAYER_NAME"] = player_name
+    return combined
 
 
 def fetch_all_default_players():
