@@ -16,7 +16,7 @@ TEAM_INFO = {
     "Kawhi Leonard":            {"team": "LAC", "pos": "SF", "number": 2},
     "LeBron James":             {"team": "LAL", "pos": "SF", "number": 23},
     "Stephen Curry":            {"team": "GSW", "pos": "PG", "number": 30},
-    "Kevin Durant":             {"team": "PHX", "pos": "PF", "number": 35},
+    "Kevin Durant":             {"team": "HOU", "pos": "PF", "number": 35},
     "Victor Wembanyama":        {"team": "SAS", "pos": "C",  "number": 1},
 }
 
