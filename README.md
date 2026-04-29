@@ -97,3 +97,6 @@ Or just search for them in the dashboard.
 - Model retrains automatically on refresh with latest game data
 - Live demo **https://dynb.onrender.com/**
 - Link to github **https://github.com/Dereck919/DYNB**
+
+## Project Members
+Bawer Bajelori  •  Khang Tonthat •  Dereck Kirkman  •  Nicholas Moffat  •  Rio Laxina  •  Atharva Kirawant •  Blake Harper
