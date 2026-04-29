@@ -87,8 +87,7 @@ TEAM_INFO["Luka Doncic"] = {"team": "DAL", "pos": "PG", "number": 77}
 ```
 
 Or just search for them in the dashboard.
-## Live Demo
- **https://dynb.onrender.com/**
+
 ## Notes
 
 - First launch takes ~30 seconds (fetch game logs + train models)
@@ -96,3 +95,5 @@ Or just search for them in the dashboard.
 - Use the refresh button to pull latest data without restarting
 - Season is set to 2025-26 in config.py (update each year)
 - Model retrains automatically on refresh with latest game data
+- Live demo **https://dynb.onrender.com/**
+- Link to github **https://github.com/Dereck919/DYNB**
