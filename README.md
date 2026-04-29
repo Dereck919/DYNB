@@ -87,7 +87,8 @@ TEAM_INFO["Luka Doncic"] = {"team": "DAL", "pos": "PG", "number": 77}
 ```
 
 Or just search for them in the dashboard.
-
+## Live Demo
+ **https://dynb.onrender.com/**
 ## Notes
 
 - First launch takes ~30 seconds (fetch game logs + train models)
