@@ -1,7 +1,7 @@
-nba_api
-pandas
-numpy
-fastapi
-uvicorn
-requests
-scikit-learn
+nba_api==1.11.4
+pandas==2.2.3
+numpy==1.26.4
+fastapi==0.115.6
+uvicorn==0.32.1
+requests==2.32.3
+scikit-learn==1.5.2
